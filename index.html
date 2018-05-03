@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="./node_modules/d3/d3.min.js"></script>
+    <script src="./node_modules/topojson/build/topojson.min.js"></script>
+    <script src="./node_modules/datamaps/dist/datamaps.world.hires.min.js"></script>
+    <style>
+      @keyframes shake {
+        0% { transform: translate(1px, 1px) rotate(0deg); }
+        10% { transform: translate(-1px, -2px) rotate(-1deg); }
+        20% { transform: translate(-3px, 0px) rotate(1deg); }
+        30% { transform: translate(3px, 2px) rotate(0deg); }
+        40% { transform: translate(1px, -1px) rotate(1deg); }
+        50% { transform: translate(-1px, 2px) rotate(-1deg); }
+        60% { transform: translate(-3px, 1px) rotate(0deg); }
+        70% { transform: translate(3px, 1px) rotate(-1deg); }
+        80% { transform: translate(-1px, -1px) rotate(1deg); }
+        90% { transform: translate(1px, 2px) rotate(0deg); }
+        100% { transform: translate(1px, -2px) rotate(-1deg); }
+      }
+      .hidden {
+        display: none;
+      }
+      .shaking {
+        animation: shake 0.5s; 
+        animation-iteration-count: infinite; 
+      }
+    </style>
+  </head>
+  <body>
+    <div id="container" style="position: relative; width: 100wv; height: 100vh"></div>
+    <div id="text" style="position: absolute;left: 50%;top: 50%;padding: 1em;background: black;color: white;text-align: center;transform: translate(-50%, 0%);">
+    </div>
+    <div id="warn" class="hidden" style="position: absolute;left: 0;top: 0;padding: 1em;background: red;color: white;text-align: center;">
+    </div>
+    <script>
+      const map = new Datamap({
+        element: document.getElementById('container'),
+        geographyConfig: {
+          borderColor: 'darkgrey',
+        },
+        fills: {
+          'sel': 'black',
+          'high': 'red',
+          defaultFill: 'lightgrey',
+        },
+      });
+      const txt = document.getElementById('text');
+      const warn = document.getElementById('warn');
+      map.bubbles([]);
+      window.onkeydown = ({ key }) => {
+        if (key === 'Enter') {
+          next();
+        }
+      };
+      const slides = [
+        {
+          text: 'Født her 1981',
+          latitude: 59.205278, 
+          longitude: 10.95,
+          time: 5,
+        },
+        {
+          text: 'INSA Toulouse',
+          latitude: 43.604444,
+          longitude: 1.443889,
+        },
+        {
+          text: 'FAST / M$',
+          latitude: 59.916667,
+          longitude: 10.733333,
+          time: 5,
+        },
+        {
+          text: 'FAST / M$: List("Lærte", "Scala").reduce(_ + " " + _)',
+          latitude: 59.916667,
+          longitude: 10.733333,
+          time: 5,
+        },
+        {
+          text: 'Typesafe',
+          latitude: 46.519833,
+          longitude: 6.6335,
+        },
+        {
+          text: 'Typesafe - kurs',
+          latitude: 51.507222, 
+          longitude: -0.1275,
+          time: 5,
+        },
+        {
+          text: 'Typesafe - LinkedIn',
+          latitude: 37.389444, 
+          longitude: -122.081944,
+          time: 5,
+        },
+        {
+          text: 'Sthlm: Adept - dependency mgmt',
+          latitude: 59.329444, 
+          longitude: 18.068611,
+          time: 5,
+        },
+        {
+          text: 'Adept + Gradle',
+          latitude: 37.389444, 
+          longitude: -122.081944,
+        },
+        {
+          text: 'Gradle',
+          latitude: -37.813611,
+          longitude: 144.963056,
+          time: 3,
+        },
+        {
+          text: 'Tilbake i Sthlm: Samuel født',
+          latitude: 59.329444, 
+          longitude: 18.068611,
+          time: 5,
+        },
+        {
+          text: 'Tingeer: 3D printing',
+          latitude: 59.329444, 
+          longitude: 18.068611,
+        },
+        {
+          text: 'Futurice',
+          latitude: 59.329444, 
+          longitude: 18.068611,
+        },
+        {
+          text: 'Oslo: Blank & Folq',
+          latitude: 59.205278, 
+          longitude: 10.95,
+        },
+      ];
+      txt.innerHTML = 'Fredriks 10x10. Estimert tid: ' + slides.reduce((prev, curr) => prev + (curr.time || 10), 0) + 's';
+      let i = 0;
+      let timer = null;
+      let start = null;
+      let spent = null;
+      function next() {
+        if (!start) {
+          start = Date.now();
+        }
+        warn.setAttribute('class', 'hidden');
+        clearTimeout(timer);
+        if (i < slides.length) {
+          const slide = slides[i];
+          txt.innerHTML = slide.text;
+          map.bubbles([{
+            fillKey: 'sel',
+            radius: 30,
+            borderOpacity: 0,
+            fillOpacity: 0.7,
+            ...slide,
+          }]);
+          i++;
+          setTimeout(() => {
+            map.bubbles([{
+              fillKey: 'high',
+              radius: 5,
+              borderOpacity: 0,
+              fillOpacity: 1,
+              ...slide,
+            }]);
+          }, 1000);
+          timer = setTimeout(() => {
+            warn.setAttribute('class', '');
+            warn.innerHTML = '2s igjen!';
+            timer = setTimeout(() => {
+              warn.innerHTML = '1s (bli ferdig!)';
+              timer = setTimeout(() => {
+                warn.setAttribute('class', 'shaking');
+                warn.innerHTML = 'HJELPES!';
+              }, 1000);
+            }, 1000);
+          }, ((slide.time || 10) - 2) * 1000);
+        } else {
+          if (!spent) {
+            spent = Math.floor((Date.now() - start) / 1000);
+          }
+          let exclamation = "! Ha - rakk det"
+          if (spent > 100) {
+            exclamation = " på litt over tida - sorry";
+          }
+          txt.innerHTML = `Ferdig${exclamation} (for jeg brukte faktisk ${spent}s)!`;
+          map.bubbles([]);
+        }
+      };
+    </script>
+  </body>
+</html>
